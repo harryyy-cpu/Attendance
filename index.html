@@ -47,8 +47,8 @@ input{font:inherit;border:1px solid var(--bd);background:var(--card);color:var(-
 
   <h2>Settings</h2>
   <div class="card" style="padding:12px">
-    <div class="row" style="padding-top:0"><span>Cycle length (days) <span class="mut" id="cs"></span></span><input type="number" id="cd" min="2" max="14" style="width:70px"></div>
-    <div class="mut" style="padding:6px 0">Someone marked present is skipped for the next (cycle − 1) days. Allowed: 2 to 14.</div>
+    <div class="row" style="padding-top:0"><span>Days hidden after present <span class="mut" id="cs"></span></span><input type="number" id="cd" min="1" max="13" style="width:70px"></div>
+    <div class="mut" style="padding:6px 0">Example with 1: present today → hidden tomorrow → shows again the day after. With 2: hidden for 2 days, back on the 3rd. Allowed: 1 to 13.</div>
     <div class="add"><input id="nm" placeholder="New name"><button class="p" id="addb">Add</button></div>
     <div id="ppl"></div>
   </div>
@@ -112,7 +112,7 @@ function absentStreak(n,d){
 /* ---------- ui ---------- */
 function row(n,right){return '<div class="row"><span>'+esc(n)+'</span>'+right+'</div>'}
 function render(){
-  $("d").value=cur;$("cd").value=S.cd;
+  $("d").value=cur;$("cd").value=S.cd-1;
   var v=[],p=[],h=[],a=[];
   S.people.forEach(function(n){
     if(isPresent(n,cur))p.push(n);
@@ -163,8 +163,9 @@ $("next").onclick=function(){cur=shift(cur,1);render()};
 $("d").onchange=function(){if(this.value){cur=this.value;render()}};
 var cdT=null;
 function saveCycle(){
-  var v=parseInt($("cd").value);
-  if(!(v>=2&&v<=14)){$("cs").textContent="· use 2 to 14";return}
+  var h=parseInt($("cd").value);
+  if(!(h>=1&&h<=13)){$("cs").textContent="· use 1 to 13";return}
+  var v=h+1;
   S.cd=v;render();$("cs").textContent="· saving…";
   clearTimeout(cdT);
   cdT=setTimeout(async function(){
