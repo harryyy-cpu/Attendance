@@ -43,12 +43,12 @@ input{font:inherit;border:1px solid var(--bd);background:var(--card);color:var(-
 
   <h2>To check</h2><div class="card" id="vis"></div>
   <h2>Present</h2><div class="card" id="pres"></div>
-  <h2>Hidden</h2><div class="card" id="hid"></div>
   <h2 class="bad">3 consecutive absences</h2><div class="card bad" id="abs"></div>
 
   <h2>Settings</h2>
   <div class="card" style="padding:12px">
-    <div class="row" style="padding-top:0"><span>Cycle length (days)</span><input type="number" id="cd" min="2" max="14" style="width:70px"></div>
+    <div class="row" style="padding-top:0"><span>Cycle length (days) <span class="mut" id="cs"></span></span><input type="number" id="cd" min="2" max="14" style="width:70px"></div>
+    <div class="mut" style="padding:6px 0">Someone marked present is skipped for the next (cycle − 1) days. Allowed: 2 to 14.</div>
     <div class="add"><input id="nm" placeholder="New name"><button class="p" id="addb">Add</button></div>
     <div id="ppl"></div>
   </div>
@@ -124,9 +124,8 @@ function render(){
   });
   $("vis").innerHTML=v.length?v.map(function(n){return row(n,'<button class="ok" data-a="mark" data-n="'+esc(n)+'">Present</button>')}).join(""):'<div class="empty">Everyone is checked 🎉</div>';
   $("pres").innerHTML=p.length?p.map(function(n){return row(n,'<button data-a="undo" data-n="'+esc(n)+'">Undo</button>')}).join(""):'<div class="empty">No one marked present yet.</div>';
-  $("hid").innerHTML=h.length?h.map(function(x){return row(x[0],'<span class="mut">back on '+pretty(x[1])+'</span>')}).join(""):'<div class="empty">No one hidden.</div>';
   $("abs").innerHTML=a.length?a.map(function(x){return row(x[0],'<span class="mut">absent since '+pretty(x[1])+'</span><button class="ok" data-a="mark" data-n="'+esc(x[0])+'">Present</button>')}).join(""):'<div class="empty">No one with 3 absences in a row.</div>';
-  $("sum").textContent=pretty(cur)+" · "+p.length+" present · "+v.length+" to check · "+h.length+" hidden · "+a.length+" absent 3x";
+  $("sum").textContent=pretty(cur)+" · "+p.length+" present · "+v.length+" to check · "+a.length+" absent 3x";
   $("ppl").innerHTML=S.people.map(function(n){return row(n,'<button class="x" data-a="del" data-n="'+esc(n)+'">✕</button>')}).join("");
 }
 
@@ -162,10 +161,19 @@ $("nm").onkeydown=function(e){if(e.key=="Enter")$("addb").click()};
 $("prev").onclick=function(){cur=shift(cur,-1);render()};
 $("next").onclick=function(){cur=shift(cur,1);render()};
 $("d").onchange=function(){if(this.value){cur=this.value;render()}};
-$("cd").onchange=function(){
-  var v=parseInt(this.value);
-  if(v>=2&&v<=14){S.cd=v;render();run(function(){return sb.from("settings").upsert({id:1,cycle:v})})}
-};
+var cdT=null;
+function saveCycle(){
+  var v=parseInt($("cd").value);
+  if(!(v>=2&&v<=14)){$("cs").textContent="· use 2 to 14";return}
+  S.cd=v;render();$("cs").textContent="· saving…";
+  clearTimeout(cdT);
+  cdT=setTimeout(async function(){
+    var r=await sb.from("settings").upsert({id:1,cycle:v});
+    $("cs").textContent=r.error?"· NOT saved: "+r.error.message:"· saved ✓";
+  },500);
+}
+$("cd").oninput=saveCycle;
+$("cd").onchange=saveCycle;
 
 /* ---------- auth + start ---------- */
 async function start(){
