@@ -35,16 +35,9 @@ input{font:inherit;border:1px solid var(--bd);background:var(--card);color:var(-
 
 <div id="msg" class="mut hide"></div>
 
-<form id="login" class="hide" onsubmit="return false">
-  <h1>📋 Daily Attendance</h1>
-  <input id="em" type="email" placeholder="Email" autocomplete="username">
-  <input id="pw" type="password" placeholder="Password" autocomplete="current-password">
-  <button class="p" id="lb" type="button">Log in</button>
-  <div id="err"></div>
-</form>
 
 <div id="app" class="hide">
-  <div class="top"><h1>📋 Daily Attendance</h1><button id="out">Log out</button></div>
+  <div class="top"><h1>📋 Daily Attendance</h1></div>
   <div class="bar"><button id="prev">‹</button><input type="date" id="d"><button id="next">›</button></div>
   <div class="mut" id="sum" style="margin-top:8px"></div>
 
@@ -77,7 +70,7 @@ function shift(s,n){var a=s.split("-");return iso(new Date(+a[0],+a[1]-1,+a[2]+n
 function diff(a,b){return Math.round((Date.parse(b)-Date.parse(a))/864e5)}
 function pretty(s){var a=s.split("-");return new Date(+a[0],+a[1]-1,+a[2]).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})}
 function esc(s){return s.replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
-function show(id){["msg","login","app"].forEach(function(x){$(x).classList.toggle("hide",x!=id)})}
+function show(id){["msg","app"].forEach(function(x){$(x).classList.toggle("hide",x!=id)})}
 
 /* ---------- data ---------- */
 async function load(){
@@ -178,22 +171,11 @@ $("cd").onchange=function(){
 async function start(){
   show("msg");$("msg").textContent="Loading…";
   try{await load();show("app");render()}
-  catch(e){$("msg").textContent="Could not load data: "+(e.message||e)+" — did you run schema.sql?"}
+  catch(e){$("msg").textContent="Could not load data: "+(e.message||e)+" — did you run the SQL in Supabase?"}
 }
-async function doLogin(){
-  $("err").textContent="";
-  var r=await sb.auth.signInWithPassword({email:$("em").value.trim(),password:$("pw").value});
-  if(r.error){$("err").textContent=r.error.message;return}
-  start();
-}
-$("lb").onclick=doLogin;
-$("pw").onkeydown=function(e){if(e.key=="Enter")doLogin()};
-$("out").onclick=async function(){await sb.auth.signOut();show("login")};
-
-(async function(){
-  if(CFG.url.indexOf("YOUR_")==0){show("msg");$("msg").textContent="Setup needed: open index.html and paste your Supabase URL and anon key into CFG.";return}
+(function(){
+  if(CFG.url.indexOf("YOUR_")==0){show("msg");$("msg").textContent="Setup needed: paste your Supabase URL and key into CFG.";return}
   sb=supabase.createClient(CFG.url,CFG.key);
-  var s=await sb.auth.getSession();
-  if(s.data&&s.data.session)start();else show("login");
+  start();
 })();
 </script></body></html>
