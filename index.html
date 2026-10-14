@@ -97,6 +97,7 @@ async function load(){
   var byId={};
   p.data.forEach(function(x){S.people.push(x.name);S.added[x.name]=x.added_on;S.ids[x.name]=x.id;byId[x.id]=x.name});
   rows.forEach(function(x){var n=byId[x.person_id];if(n)(S.rec[x.date]=S.rec[x.date]||[]).push(n)});
+  S.people.sort(function(a,b){return a.localeCompare(b,undefined,{sensitivity:"base"})});
 }
 async function run(fn){
   try{var r=await fn();if(r&&r.error)throw r.error}
